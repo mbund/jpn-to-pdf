@@ -1,5 +1,5 @@
 {
-  description = "My Python application";
+  description = "M3C Environment set up";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs";
@@ -11,11 +11,15 @@
       let
         pkgs = import nixpkgs { inherit system; };
       in {
-        defaultApp = pkgs.writeShellApplication {
-          name = "render-latex";
-          runtimeInputs = with pkgs; [ pandoc poetry ];
-          text = ./render-latex.sh;
+        apps.render-latex = flake-utils.lib.mkApp {
+          drv = pkgs.writeShellApplication {
+            name = "render-latex";
+            runtimeInputs = with pkgs; [ pandoc poetry ];
+            text = ./render-latex.sh;
+          };
         };
+
+        defaultApp = self.apps.render-latex;
 
         devShell = pkgs.mkShell {
           buildInputs = [
