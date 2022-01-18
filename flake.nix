@@ -11,6 +11,12 @@
       let
         pkgs = import nixpkgs { inherit system; };
       in {
+        defaultApp = pkgs.writeShellApplication {
+          name = "render-latex";
+          runtimeInputs = with pkgs; [ pandoc poetry ];
+          text = ./render-latex.sh;
+        };
+
         devShell = pkgs.mkShell {
           buildInputs = [
             # install poetry for python environment handling
