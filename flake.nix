@@ -9,23 +9,21 @@
   outputs = { self, nixpkgs, flake-utils }:
     flake-utils.lib.eachDefaultSystem (system:
       let
-        pkgs = nixpkgs.legacyPackages.${system};
-        
-        app = pkgs.poetry2nix.mkPoetryApplication {
-          projectDir = ./.;
-          overrides = [ pkgs.poetry2nix.defaultPoetryOverrides ];
-        };
-
-        packageName = "m3c";
+        pkgs = import nixpkgs { inherit system; };
       in {
-        packages.${packageName} = app;
-
-        defaultPackage = self.packages.${system}.${packageName};
-
         devShell = pkgs.mkShell {
-          buildInputs = with pkgs; [ poetry pkgs.python3Packages.pandas ];
-          LD_LIBRARY_PATH="${pkgs.stdenv.cc.cc.lib}/lib/:/run/opengl-driver/lib/";
+          buildInputs = [
+            # install poetry for python environment handling
+            pkgs.poetry
+
+            # install pandas separately because visual studio code runs
+            # `POETRY_PYTHON_DIRECTORY/bin/python -c "import pandas;print(pandas.__version__)"`
+            # to detect if pandas exists for the data viewer
+            pkgs.python3Packages.pandas
+          ];
+
+          # libstdc++ is required by...jupyter probably, anyways we have to link it
+          LD_LIBRARY_PATH="${pkgs.stdenv.cc.cc.lib}/lib/";
         };
       });
 }
-
