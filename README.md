@@ -1,3 +1,3 @@
 # m3c-environment
 
-Jupyter notebook environment setup with poetry and optionally nix, to compete in the 2022 M3C.
+[Jupyter notebook](https://jupyter.org) environment setup with [poetry](https://python-poetry.org) and optionally [Nix](https://nixos.org), to compete in the 2022 [MathWorks Math Modelling Challenge (M3C)](m3challenge.siam.org).
