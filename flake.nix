@@ -10,39 +10,50 @@
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs { inherit system; };
+
+        render_inputs = with pkgs; [
+          poetry
+          pandoc
+          (texlive.combine {
+            inherit (texlive)
+            scheme-small
+            adjustbox
+            caption
+            collectbox
+            enumitem
+            environ
+            eurosym
+            jknapltx
+            parskip
+            pgf
+            rsfs
+            tcolorbox
+            titling
+            trimspaces
+            ucs
+            ulem
+            upquote;
+          })
+        ];
+
       in rec {
         apps.render-latex = flake-utils.lib.mkApp {
           drv = pkgs.writeShellApplication {
             name = "render-latex";
-            runtimeInputs = with pkgs; [
-              poetry
-              pandoc
-              (texlive.combine {
-                inherit (texlive)
-                scheme-small
-                adjustbox
-                caption
-                collectbox
-                enumitem
-                environ
-                eurosym
-                jknapltx
-                parskip
-                pgf
-                rsfs
-                tcolorbox
-                titling
-                trimspaces
-                ucs
-                ulem
-                upquote;
-              })
-            ];
-            text = ./render-latex.sh;
+            runtimeInputs = render_inputs;
+            text = "poetry run jupyter nbconvert --to=latex ./*.ipynb";
           };
         };
 
-        defaultApp = apps.render-latex;
+        apps.render-pdf = flake-utils.lib.mkApp {
+          drv = pkgs.writeShellApplication {
+            name = "render-pdfs";
+            runtimeInputs = render_inputs;
+            text = "poetry run jupyter nbconvert --to=pdf ./*.ipynb";
+          };
+        };
+
+        defaultApp = apps.render-pdf;
 
         devShell = pkgs.mkShell {
           buildInputs = [
