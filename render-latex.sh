@@ -1,2 +1,1 @@
-echo "Hello world"
-pandoc
+poetry run jupyter nbconvert --to=pdf *.ipynb

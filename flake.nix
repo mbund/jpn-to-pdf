@@ -10,16 +10,39 @@
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs { inherit system; };
-      in {
+      in rec {
         apps.render-latex = flake-utils.lib.mkApp {
           drv = pkgs.writeShellApplication {
             name = "render-latex";
-            runtimeInputs = with pkgs; [ pandoc poetry ];
+            runtimeInputs = with pkgs; [
+              poetry
+              pandoc
+              (texlive.combine {
+                inherit (texlive)
+                scheme-small
+                adjustbox
+                caption
+                collectbox
+                enumitem
+                environ
+                eurosym
+                jknapltx
+                parskip
+                pgf
+                rsfs
+                tcolorbox
+                titling
+                trimspaces
+                ucs
+                ulem
+                upquote;
+              })
+            ];
             text = ./render-latex.sh;
           };
         };
 
-        defaultApp = self.apps.render-latex;
+        defaultApp = apps.render-latex;
 
         devShell = pkgs.mkShell {
           buildInputs = [
