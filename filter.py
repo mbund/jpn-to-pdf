@@ -13,9 +13,11 @@ def main():
     doc['blocks'] = [x for block in doc['blocks']
                      if (x := do_cell(block)) is not None]
     doc['blocks'] += [
+        Header(1, [Str('References')]),
+        Div([], id='refs'),
         RawBlock("\\clearpage"),
         Header(1, [Str('Appendix')]),
-        CodeBlock('\n\n'.join(codes), classes=['python'])
+        *codes
     ]
     json.dump(doc, sys.stdout)
 
@@ -31,8 +33,11 @@ def do_cell(cell):
     _id, classes, _metadata = attr
     assert 'cell' in classes
 
-    if not 'code' in classes:
-        # leave markdown alone
+    if 'markdown' in classes:
+        header = next((b for b in body if b['t'] == 'Header'), None)
+        if header:
+            # codes.append(header)
+            pass
         return cell
 
     code = next(b for b in body if b['t'] == 'CodeBlock')
@@ -42,17 +47,17 @@ def do_cell(cell):
     source = code['c'][1]
     if (match := re.search(r'^%figure\s+(.*)$', source, re.MULTILINE)):
         # figure
-        codes.append(source[0:match.start()] + source[match.end():])
+        codes.append(CodeBlock(source[0:match.start()] + source[match.end():]))
         return Div(
             [
-                RawBlock(r'\begin{figure}[h]'),
+                RawBlock(r'\begin{figure}[h!]'),
+                output,
                 Plain([
                     RawInline(r'\caption{'),
                     Str(json.loads(match[1])),
                     RawInline(r'}'),
                 ]),
-                output,
-                RawBlock(r'\end{figure}')
+                RawBlock(r'\end{figure}'),
             ]
         )
     elif (match := re.search(r'^%show', source, re.MULTILINE)):
@@ -60,7 +65,7 @@ def do_cell(cell):
         # do NOT include in code listing
         return output
     else:
-        codes.append(source)
+        codes.append(CodeBlock(source))
 
 
 def Str(s):
@@ -81,7 +86,7 @@ def Div(blocks, id='', classes=[], keyvalues=[]):
     }
 
 
-def CodeBlock(text, id='', classes=[], keyvalues=[]):
+def CodeBlock(text, id='', classes=['python'], keyvalues=[]):
     return {
         't': 'CodeBlock',
         'c': [[id, classes, keyvalues], text]

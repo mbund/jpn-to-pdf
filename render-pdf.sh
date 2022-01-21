@@ -1,1 +1,1 @@
-poetry run "cat paper.ipynb | python output_to_input.py | pandoc --from ipynb --filter filter.py --out test.pdf"
+poetry run "cat paper.ipynb | python output_to_input.py | pandoc --from ipynb+citations --filter filter.py --citeproc --bibliography bibliography.bib --metadata link-citations=true --csl apa-numeric-superscript-brackets.csl --out test.pdf"

@@ -2,3 +2,4 @@
 *.pdf
 *.tex
 pandoc.exe
+*.pyc
