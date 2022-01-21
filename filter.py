@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import json
 import sys
+import re
 
 from black import out
 
@@ -11,9 +12,17 @@ def main():
     doc = json.load(fp)
     doc['blocks'] = [x for block in doc['blocks']
                      if (x := do_cell(block)) is not None]
+    doc['blocks'] += [
+        RawBlock("\\clearpage"),
+        Header(1, [Str('Appendix')]),
+        CodeBlock('\n\n'.join(codes), classes=['python'])
+    ]
     json.dump(doc, sys.stdout)
 
 # Return None or the modified cell
+
+
+codes = []
 
 
 def do_cell(cell):
@@ -30,24 +39,28 @@ def do_cell(cell):
     output = next(
         (b for b in body if b['t'] == 'Div' and 'output' in b['c'][0][1]), None)
 
-    if (name := get_figure_or_show(code['c'][1])) is not None:
-        if name == '':  # show
-            return output
+    source = code['c'][1]
+    if (match := re.search(r'^%figure\s+(.*)$', source, re.MULTILINE)):
         # figure
+        codes.append(source[0:match.start()] + source[match.end():])
         return Div(
             [
                 RawBlock(r'\begin{figure}[h]'),
                 Plain([
                     RawInline(r'\caption{'),
-                    Str(name),
+                    Str(json.loads(match[1])),
                     RawInline(r'}'),
                 ]),
                 output,
                 RawBlock(r'\end{figure}')
             ]
         )
-    elif output:
-        return None
+    elif (match := re.search(r'^%show', source, re.MULTILINE)):
+        # show
+        # do NOT include in code listing
+        return output
+    else:
+        codes.append(source)
 
 
 def Str(s):
@@ -68,6 +81,13 @@ def Div(blocks, id='', classes=[], keyvalues=[]):
     }
 
 
+def CodeBlock(text, id='', classes=[], keyvalues=[]):
+    return {
+        't': 'CodeBlock',
+        'c': [[id, classes, keyvalues], text]
+    }
+
+
 def RawBlock(latex):
     return {
         't': 'RawBlock',
@@ -82,18 +102,11 @@ def RawInline(latex):
     }
 
 
-def get_figure_or_show(source: str):
-    lines = source.split('\n')
-    for line in lines:
-        l = line.lstrip()
-        if l.startswith(r'%figure'):
-            arg = l.partition(' ')[2]
-            name = json.loads(arg)
-            assert isinstance(name, str)
-            return name
-        if l.startswith(r'%show'):
-            return ''
-    return None
+def Header(level, inlines, id='', classes=[], keyvalues=[]):
+    return {
+        't': 'Header',
+        'c': [level, [id, classes, keyvalues], inlines]
+    }
 
 
 if __name__ == "__main__":
