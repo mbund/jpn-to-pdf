@@ -1,5 +1,6 @@
 *_files/
 *.pdf
 *.tex
+!template.tex
 pandoc.exe
 *.pyc

@@ -13,6 +13,7 @@ def main():
     doc['blocks'] = [x for block in doc['blocks']
                      if (x := do_cell(block)) is not None]
     doc['blocks'] += [
+        RawBlock("\\clearpage"),
         Header(1, [Str('References')]),
         Div([], id='refs'),
         RawBlock("\\clearpage"),
