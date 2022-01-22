@@ -10,6 +10,8 @@ def main():
     fp = sys.stdin
     # fp = open('test.json')
     doc = json.load(fp)
+    # the table of contents should be raw latex in
+    # the notebook
     doc['blocks'] = [x for block in doc['blocks']
                      if (x := do_cell(block)) is not None]
     doc['blocks'] += [
