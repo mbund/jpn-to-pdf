@@ -1,1 +1,0 @@
-poetry run "cat paper.ipynb | python output_to_input.py | pandoc --from ipynb+citations+raw_attribute --filter filter.py --citeproc --bibliography bibliography.bib --metadata link-citations=true --number-sections --template template.tex --csl apa-numeric-superscript-brackets.csl --out test.pdf"

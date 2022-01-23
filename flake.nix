@@ -14,49 +14,20 @@
         render_inputs = with pkgs; [
           poetry
           pandoc
-          (texlive.combine {
-            inherit (texlive)
-            scheme-small
-            adjustbox
-            caption
-            collectbox
-            enumitem
-            environ
-            eurosym
-            jknapltx
-            parskip
-            pgf
-            rsfs
-            tcolorbox
-            titling
-            trimspaces
-            ucs
-            ulem
-            upquote;
-          })
+          (texlive.combine { inherit (texlive) scheme-small lastpage; })
         ];
 
+        render-paper-drv = pkgs.writeShellApplication {
+          name = "render-paper";
+          runtimeInputs = render_inputs;
+          text = builtins.readFile ./render-paper.sh;
+        };
+
       in rec {
-        apps.render-latex = flake-utils.lib.mkApp {
-          drv = pkgs.writeShellApplication {
-            name = "render-latex";
-            runtimeInputs = render_inputs;
-            text = "poetry run jupyter nbconvert --to=latex ./*.ipynb";
-          };
-        };
-
-        apps.render-pdf = flake-utils.lib.mkApp {
-          drv = pkgs.writeShellApplication {
-            name = "render-pdfs";
-            runtimeInputs = render_inputs;
-            text = "poetry run jupyter nbconvert --to=pdf ./*.ipynb";
-          };
-        };
-
-        defaultApp = apps.render-pdf;
-
         devShell = pkgs.mkShell {
           buildInputs = [
+            render-paper-drv
+
             # install poetry for python environment handling
             pkgs.poetry
 

@@ -3,13 +3,11 @@ import json
 import sys
 import re
 
-from black import out
-
 
 def main():
     fp = sys.stdin
-    # fp = open('test.json')
     doc = json.load(fp)
+
     # the table of contents should be raw latex in
     # the notebook
     doc['blocks'] = [x for block in doc['blocks']
@@ -24,10 +22,10 @@ def main():
     ]
     json.dump(doc, sys.stdout)
 
-# Return None or the modified cell
-
 
 codes = []
+
+# Return None or the modified cell
 
 
 def do_cell(cell):
@@ -54,7 +52,7 @@ def do_cell(cell):
         return Div(
             [
                 RawBlock(r'\begin{figure}[h!]'),
-                output,
+                output if output else Div([]),
                 Plain([
                     RawInline(r'\caption{'),
                     Str(json.loads(match[1])),
@@ -63,8 +61,7 @@ def do_cell(cell):
                 RawBlock(r'\end{figure}'),
             ]
         )
-    elif (match := re.search(r'^%show', source, re.MULTILINE)):
-        # show
+    elif (match := re.search(r'^%render', source, re.MULTILINE)):
         # do NOT include in code listing
         return output
     else:

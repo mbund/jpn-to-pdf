@@ -1,0 +1,2 @@
+poetry env use python
+python ./render-pdf/output_to_input.py paper.ipynb | pandoc --from ipynb+citations+raw_attribute --filter ./render-pdf/filter.py --citeproc --bibliography bibliography.bib --metadata link-citations=true --number-sections --template ./render-pdf/template.tex --csl ./render-pdf/apa-numeric-superscript-brackets.csl --out paper.pdf
