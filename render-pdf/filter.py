@@ -2,7 +2,7 @@
 import json
 import sys
 import re
-
+from more_itertools import intersperse
 
 def main():
     fp = sys.stdin
@@ -18,10 +18,9 @@ def main():
         Div([], id='refs'),
         RawBlock("\\clearpage"),
         Header(1, [Str('Appendix')]),
-        *codes
+        *intersperse({"t":"HorizontalRule"}, map(CodeBlock, filter(bool, codes)))
     ]
     json.dump(doc, sys.stdout)
-
 
 codes = []
 
@@ -48,14 +47,15 @@ def do_cell(cell):
     source = code['c'][1]
     if (match := re.search(r'^%figure\s+(.*)$', source, re.MULTILINE)):
         # figure
-        codes.append(CodeBlock(source[0:match.start()] + source[match.end():]))
+        figure_name = json.loads(match[1])
+        codes.append(f"# {figure_name}{source[0:match.start()] + source[match.end():]}")
         return Div(
             [
                 RawBlock(r'\begin{figure}[h!]'),
                 output if output else Div([]),
                 Plain([
                     RawInline(r'\caption{'),
-                    Str(json.loads(match[1])),
+                    Str(figure_name),
                     RawInline(r'}'),
                 ]),
                 RawBlock(r'\end{figure}'),
@@ -65,7 +65,7 @@ def do_cell(cell):
         # do NOT include in code listing
         return output
     else:
-        codes.append(CodeBlock(source))
+        codes.append(source)
 
 
 def Str(s):
