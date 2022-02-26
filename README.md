@@ -1,6 +1,6 @@
 # m3c-environment
 
-[Jupyter notebook](https://jupyter.org) environment setup with [poetry](https://python-poetry.org) and optionally [Nix](https://nixos.org), to compete in the 2022 [MathWorks Math Modelling Challenge (M3C)](m3challenge.siam.org).
+[Jupyter notebook](https://jupyter.org) environment setup with [poetry](https://python-poetry.org) and optionally [Nix](https://nixos.org), to automatically create a nice looking latex paper.
 
 ## Template
 Running `render-paper.sh` while in the project directory will output a new `paper.pdf` following the template.

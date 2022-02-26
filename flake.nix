@@ -1,44 +1,76 @@
 {
-  description = "M3C Environment set up";
+  description = "Jupyter notebook + PDF generator";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs";
+    poetry2nix.url = "github:nix-community/poetry2nix";
     flake-utils.url = "github:numtide/flake-utils";
+    flake-compat = { url = "github:edolstra/flake-compat"; flake = false; };
   };
 
-  outputs = { self, nixpkgs, flake-utils }:
-    flake-utils.lib.eachDefaultSystem (system:
-      let
-        pkgs = import nixpkgs { inherit system; };
+  outputs = { self, nixpkgs, poetry2nix, flake-utils, ... }:
+    flake-utils.lib.eachSystem
+      (with flake-utils.lib.system; [
+        x86_64-linux
 
-        render_inputs = with pkgs; [
-          poetry
-          pandoc
-          (texlive.combine { inherit (texlive) scheme-small lastpage; })
-        ];
+      ])
+      (system:
+        let
+          pkgs = import nixpkgs {
+            inherit system;
+            overlays = [
+              poetry2nix.overlay
+            ];
+          };
 
-        render-paper-drv = pkgs.writeShellApplication {
-          name = "render-paper";
-          runtimeInputs = render_inputs;
-          text = builtins.readFile ./render-paper.sh;
-        };
+          poetryEnv = pkgs.poetry2nix.mkPoetryEnv {
+            python = pkgs.python3;
+            projectDir = ./.;
+          };
 
-      in rec {
-        devShell = pkgs.mkShell {
-          buildInputs = [
-            render-paper-drv
+          render-paper-drv = pkgs.writeShellApplication {
+            name = "render-paper";
+            runtimeInputs = with pkgs; [
+              poetryEnv
+              pandoc
+              (texlive.combine { inherit (texlive) scheme-small lastpage; })
+            ];
+            text = builtins.readFile ./render-paper.sh;
+          };
 
-            # install poetry for python environment handling
-            pkgs.poetry
+          packageName = "jupyter-notebook-pdf-generator";
 
-            # install pandas separately because visual studio code runs
-            # `POETRY_PYTHON_DIRECTORY/bin/python -c "import pandas;print(pandas.__version__)"`
-            # to detect if pandas exists for the data viewer
-            pkgs.python3Packages.pandas
-          ];
+        in
+        {
 
-          # libstdc++ is required by...jupyter probably, anyways we have to link it
-          LD_LIBRARY_PATH="${pkgs.stdenv.cc.cc.lib}/lib/";
-        };
-      });
+          devShells.init = pkgs.mkShell {
+            packages = with pkgs; [
+              poetry
+            ];
+          };
+
+          devShells.dev = pkgs.mkShell {
+            buildInputs = with pkgs; [
+            ];
+
+            inputsFrom = [
+              self.devShells.${system}.init
+              poetryEnv.env
+            ];
+
+            shellHook = ''
+              [ $STARSHIP_SHELL ] && exec $STARSHIP_SHELL
+            '';
+
+            CURRENT_PROJECT = packageName;
+          };
+
+          devShell = self.devShells.${system}.dev;
+
+          defaultApp = { type = "app"; program = "${render-paper-drv}/bin/render-paper"; };
+
+        });
+
 }
+
+
